@@ -1,10 +1,14 @@
 'use strict';
 /* Input, update loop, screens. */
 function resize() {
-  DPR = Math.min(window.devicePixelRatio || 1, 2); W = window.innerWidth; H = window.innerHeight;
+  DPR = Math.min(window.devicePixelRatio || 1, 2); const bounds = $('app').getBoundingClientRect(); W = Math.round(bounds.width) || window.innerWidth; H = Math.round(bounds.height) || window.innerHeight;
   for (const c of [canvas, lightCv]) { c.width = Math.floor(W * DPR); c.height = Math.floor(H * DPR); }
 }
-window.addEventListener('resize', resize); resize();
+window.addEventListener('resize', resize);
+window.visualViewport?.addEventListener('resize', resize);
+document.addEventListener('fullscreenchange', resize);
+document.addEventListener('webkitfullscreenchange', resize);
+resize();
 const baseZoom = () => clamp(W / (30 * HW), 0.8, 1.9);
 
 function startGame() {
@@ -50,7 +54,7 @@ canvas.addEventListener('pointerdown', (e) => {
   if (e.button === 0) swingBaton(); else if (e.button === 2) throwLure();
 });
 canvas.addEventListener('wheel', (e) => { if (G.state === 'play') G.zoomUser = clamp(G.zoomUser - Math.sign(e.deltaY) * 0.08, 0.7, 1.5); }, { passive: true });
-$('start-btn').onclick = startGame; $('resume-btn').onclick = () => setPaused(false); $('restart-btn').onclick = startGame;
+$('start-btn').onclick = () => { if (Mobile.enabled) Display.enter(); startGame(); }; $('resume-btn').onclick = () => setPaused(false); $('restart-btn').onclick = startGame;
 $('mute-btn').onclick = () => Sfx.toggleMute(); $('retry-btn').onclick = startGame; $('again-btn').onclick = startGame;
 $('log-close').onclick = closeModals; $('bench-close').onclick = closeModals;
 
