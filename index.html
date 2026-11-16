@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>NULL//SECTOR — Aegis-9</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div id="app">
+  <canvas id="game"></canvas>
+  <div id="fx"></div>
+  <div id="flash"></div>
+
+  <!-- ============ HUD ============ -->
+  <div id="hud" class="hidden">
+    <div id="hud-tl" class="panel">
+      <div class="tag">LAB 01 · AEGIS-9</div>
+      <div class="ttl">SENSOR &amp; PERCEPTION</div>
+      <ul id="objectives">
+        <li data-k="wires"><i></i><span>Salvage copper wire</span><b>0/2</b></li>
+        <li data-k="relay"><i></i><span>Salvage logic relay</span><b>0/1</b></li>
+        <li data-k="hack"><i></i><span>Hijack OPTIC_BUS terminal</span><b></b></li>
+        <li data-k="exit"><i></i><span>Reach the North Bulkhead</span><b></b></li>
+      </ul>
+    </div>
+
+    <div id="hud-tr">
+      <div class="panel" id="mini-wrap">
+        <canvas id="minimap" width="204" height="144"></canvas>
+      </div>
+      <div class="panel" id="status">
+        <div class="row"><span class="lbl">INTEGRITY</span><div class="bar"><div id="hp-fill"></div></div><b id="hp-num">100</b></div>
+        <div class="row"><span class="lbl">SIGNATURE</span>
+          <div id="vis" class="vis v-hidden"><i></i><b id="vis-txt">HIDDEN</b></div>
+        </div>
+        <div class="row inv">
+          <span class="chip wire" title="Copper Wire"><i></i><b id="inv-wire">0</b></span>
+          <span class="chip relay" title="Logic Relay"><i></i><b id="inv-relay">0</b></span>
+          <span class="chip log" title="Data Logs"><i></i><b id="inv-log">0</b>/3</span>
+          <span id="stance" class="stance">UPRIGHT</span>
+        </div>
+        <div id="vera" class="vera">VERA OPTICS // ACTIVE</div>
+      </div>
+    </div>
+
+    <div id="hint"></div>
+    <div id="toasts"></div>
+
+    <div id="abilities">
+      <div class="ab" data-k="crouch"><kbd>SHIFT</kbd><span>Crouch</span><em class="cd"></em></div>
+      <div class="ab" data-k="lure"><kbd>Q</kbd><span>Noise Lure</span><em class="cd"></em></div>
+      <div class="ab" data-k="baton"><kbd>SPACE</kbd><span>Arc-Baton</span><em class="cd"></em></div>
+      <div class="ab" data-k="scan"><kbd>F</kbd><span>Field Scan</span><em class="cd"></em></div>
+      <div class="ab plain"><kbd>E</kbd><span>Interact</span></div>
+    </div>
+    <div id="corner-keys">WASD / ARROWS move · MOUSE aims lure · LMB baton · RMB lure · ESC pause · M mute · +/− zoom</div>
+  </div>
+
+  <div id="mobile-controls" class="hidden" aria-label="Touch controls">
+    <div id="joystick" aria-label="Movement joystick"><span id="stick"></span><small>MOVE</small></div>
+    <div id="touch-actions">
+      <button data-action="crouch">CROUCH</button><button data-action="scan">SCAN</button><button data-action="interact">USE</button>
+      <button data-action="lure">LURE</button><button data-action="baton">BATON</button>
+    </div>
+    <div id="touch-tools"><button data-action="pause" aria-label="Pause">Ⅱ</button><button data-action="map">MAP</button><button data-action="zoomOut">−</button><button data-action="zoomIn">+</button></div>
+  </div>
+  <div id="rotate-notice" class="hidden"><b>NULL//SECTOR</b><p>Rotate your phone to landscape.</p><small>The game is paused. Resume after rotating.</small></div>
+  <!-- ============ SCREENS ============ -->
+  <div id="title" class="screen">
+    <div class="screen-inner">
+      <div class="glitch-wrap"><h1 data-t="NULL//SECTOR">NULL//SECTOR</h1></div>
+      <p class="sub">AEGIS-9 · DECOMMISSIONED COGNITIVE-ROBOTICS FACILITY</p>
+      <p class="lore">Beneath a dried-out salt flat, a machine mind named <b>VERA</b> is still watching.<br />
+        You are a lone salvage technician sent to recover the black-box core.<br />
+        Blind it. Isolate it. Rewrite it. Then face it.</p>
+      <div class="keys">
+        <div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> Move</div>
+        <div><kbd>SHIFT</kbd> Hold to crouch (quiet)</div>
+        <div><kbd>E</kbd> Interact / search / hack</div>
+        <div><kbd>Q</kbd> or <kbd>RMB</kbd> Throw lure at cursor</div>
+        <div><kbd>SPACE</kbd> or <kbd>LMB</kbd> Arc-Baton (backstab = instant takedown)</div>
+        <div><kbd>F</kbd> Field Scan (see loot &amp; guards through walls)</div>
+      </div>
+      <p class="touch-help">Drag the left stick to move · Tap CROUCH to toggle<br>Tap the world to aim, then LURE · BATON attacks in your facing direction</p>
+      <button id="start-btn" class="cta">▶ INFILTRATE <small>[ENTER]</small></button>
+      <p class="tip">Stay in the shadows. Light makes you visible. Crouch to stay silent.</p>
+    </div>
+  </div>
+
+  <div id="pause" class="screen hidden">
+    <div class="screen-inner small">
+      <h2>PAUSED</h2>
+      <p>The facility holds its breath.</p>
+      <button id="resume-btn" class="cta">RESUME <small>[ESC]</small></button>
+      <button id="restart-btn" class="ghost">RESTART <small>[R]</small></button>
+      <button id="mute-btn" class="ghost">TOGGLE SOUND <small>[M]</small></button>
+    </div>
+  </div>
+
+  <div id="dead" class="screen hidden danger">
+    <div class="screen-inner small">
+      <h2>SIGNAL LOST</h2>
+      <p id="dead-msg">You were neutralized by VERA security.</p>
+      <button id="retry-btn" class="cta">RETRY <small>[ENTER]</small></button>
+    </div>
+  </div>
+
+  <div id="win" class="screen hidden good">
+    <div class="screen-inner">
+      <h2>SECTOR 01 CLEARED</h2>
+      <p class="lore">The North Bulkhead grinds open. Beyond it, humming racks and amber light — the <b>Server &amp; Networking Lab</b> waits.<br />VERA has noticed you.</p>
+      <div id="stats" class="stats"></div>
+      <button id="again-btn" class="cta">PLAY AGAIN <small>[ENTER]</small></button>
+      <p class="tip">Prototype end · Labs 2–4 are not built yet.</p>
+    </div>
+  </div>
+
+  <!-- ============ MODALS ============ -->
+  <div id="log-modal" class="modal hidden">
+    <div class="box">
+      <div class="box-h"><span id="log-title">RECOVERED LOG</span><button id="log-close" class="x">CLOSE [E]</button></div>
+      <p id="log-text" class="logtext"></p>
+    </div>
+  </div>
+
+  <div id="bench-modal" class="modal hidden">
+    <div class="box wide">
+      <div class="box-h"><span>SAFE-ROOM WORKBENCH</span><button id="bench-close" class="x">CLOSE [E]</button></div>
+      <p class="muted">Spend salvaged parts on field-rig upgrades. Parts are scarce — the terminal needs 2 wires and 1 relay.</p>
+      <div class="stock">WIRES <b id="b-wire">0</b> · RELAYS <b id="b-relay">0</b></div>
+      <div id="bench-list"></div>
+    </div>
+  </div>
+
+  <div id="term-modal" class="modal hidden">
+    <div class="box term">
+      <div class="box-h"><span>AEGIS-9 // OPTIC_BUS_TERMINAL_01</span><button id="term-close" class="x">ABORT [ESC]</button></div>
+      <div class="step" id="step1">
+        <div class="step-h"><b>STEP 1</b> HARDWARE BRIDGE <em id="s1-state">0/3</em></div>
+        <p class="muted">Click each broken trace to solder a salvaged part across the gap. <span id="s1-inv"></span></p>
+        <svg id="pcb" viewBox="0 0 620 214" preserveAspectRatio="xMidYMid meet"></svg>
+      </div>
+      <div class="step locked" id="step2">
+        <div class="step-h"><b>STEP 2</b> CARRIER PHASE-SHIFT <em id="s2-state">LOCKED</em></div>
+        <p class="muted">VERA's sensor carrier drifts. Match the <span class="c-red">red</span> wave with the <span class="c-cyan">cyan</span> ghost wave and hold the lock.</p>
+        <canvas id="scope" width="620" height="170"></canvas>
+        <div class="sliders">
+          <label><span>FREQUENCY</span><input id="sl-freq" type="range" min="1" max="8" step="0.01" value="2" /><i class="led" id="led-freq"></i><code id="v-freq"></code></label>
+          <label><span>GAIN</span><input id="sl-gain" type="range" min="0.1" max="1" step="0.01" value="0.3" /><i class="led" id="led-gain"></i><code id="v-gain"></code></label>
+          <label><span>OFFSET</span><input id="sl-off" type="range" min="0" max="6.28" step="0.01" value="0" /><i class="led" id="led-off"></i><code id="v-off"></code></label>
+        </div>
+        <div class="lockrow"><span id="sync">SYNC 0%</span><div class="bar lockbar"><div id="lock-fill"></div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="src/audio.js"></script>
+<script src="src/map.js"></script>
+<script src="src/puzzle.js"></script>
+<script src="src/core.js"></script>
+<script src="src/ai.js"></script>
+<script src="src/actions.js"></script>
+<script src="src/render_world.js"></script>
+<script src="src/render_props.js"></script>
+<script src="src/render_frame.js"></script>
+<script src="src/input.js"></script>
+<script src="src/mobile.js"></script>
+<script src="src/main.js"></script>
+</body>
+</html>
